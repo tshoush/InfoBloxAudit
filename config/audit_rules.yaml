@@ -1,0 +1,172 @@
+# InfoBlox Audit Rules Configuration
+
+# DNS Audit Rules
+dns_rules:
+  zone_security:
+    - rule_id: "DNS-001"
+      name: "DNSSEC Validation"
+      description: "Ensure DNSSEC validation is enabled"
+      severity: "high"
+      check: "dnssec_validation_enabled"
+      
+    - rule_id: "DNS-002"
+      name: "Zone Transfer Security"
+      description: "Restrict zone transfers to authorized servers only"
+      severity: "critical"
+      check: "zone_transfer_restrictions"
+      
+    - rule_id: "DNS-003"
+      name: "Recursion Configuration"
+      description: "Recursion should be properly configured"
+      severity: "medium"
+      check: "recursion_settings"
+
+  record_security:
+    - rule_id: "DNS-004"
+      name: "Wildcard Records"
+      description: "Review wildcard DNS records for security implications"
+      severity: "medium"
+      check: "wildcard_records"
+      
+    - rule_id: "DNS-005"
+      name: "Suspicious Records"
+      description: "Identify potentially malicious DNS records"
+      severity: "high"
+      check: "suspicious_records"
+
+# DHCP Audit Rules
+dhcp_rules:
+  scope_security:
+    - rule_id: "DHCP-001"
+      name: "Scope Utilization"
+      description: "Monitor DHCP scope utilization rates"
+      severity: "medium"
+      check: "scope_utilization"
+      threshold: 85
+      
+    - rule_id: "DHCP-002"
+      name: "Lease Duration"
+      description: "Ensure appropriate lease durations"
+      severity: "low"
+      check: "lease_duration"
+      min_duration: 3600
+      max_duration: 86400
+
+  reservation_security:
+    - rule_id: "DHCP-003"
+      name: "Static Reservations"
+      description: "Review static DHCP reservations"
+      severity: "medium"
+      check: "static_reservations"
+
+# Security Audit Rules
+security_rules:
+  authentication:
+    - rule_id: "SEC-001"
+      name: "Default Passwords"
+      description: "Ensure default passwords are changed"
+      severity: "critical"
+      check: "default_passwords"
+      
+    - rule_id: "SEC-002"
+      name: "Password Complexity"
+      description: "Verify password complexity requirements"
+      severity: "high"
+      check: "password_complexity"
+      
+    - rule_id: "SEC-003"
+      name: "Account Lockout"
+      description: "Check account lockout policies"
+      severity: "medium"
+      check: "account_lockout"
+
+  network_security:
+    - rule_id: "SEC-004"
+      name: "SSL/TLS Configuration"
+      description: "Verify SSL/TLS security settings"
+      severity: "high"
+      check: "ssl_configuration"
+      
+    - rule_id: "SEC-005"
+      name: "Service Exposure"
+      description: "Review exposed network services"
+      severity: "medium"
+      check: "service_exposure"
+
+  system_security:
+    - rule_id: "SEC-006"
+      name: "Software Updates"
+      description: "Check for available security updates"
+      severity: "high"
+      check: "software_updates"
+      
+    - rule_id: "SEC-007"
+      name: "Log Configuration"
+      description: "Verify logging is properly configured"
+      severity: "medium"
+      check: "log_configuration"
+
+# Compliance Audit Rules
+compliance_rules:
+  sox:
+    - rule_id: "SOX-001"
+      name: "Change Management"
+      description: "Ensure proper change management controls"
+      severity: "high"
+      check: "change_management"
+      
+    - rule_id: "SOX-002"
+      name: "Access Controls"
+      description: "Verify access control implementation"
+      severity: "high"
+      check: "access_controls"
+
+  pci_dss:
+    - rule_id: "PCI-001"
+      name: "Network Segmentation"
+      description: "Verify network segmentation controls"
+      severity: "critical"
+      check: "network_segmentation"
+      
+    - rule_id: "PCI-002"
+      name: "Encryption in Transit"
+      description: "Ensure data encryption in transit"
+      severity: "high"
+      check: "encryption_transit"
+
+  soc2:
+    - rule_id: "SOC2-001"
+      name: "Monitoring Controls"
+      description: "Verify monitoring and alerting controls"
+      severity: "medium"
+      check: "monitoring_controls"
+      
+    - rule_id: "SOC2-002"
+      name: "Backup Procedures"
+      description: "Check backup and recovery procedures"
+      severity: "medium"
+      check: "backup_procedures"
+
+# Risk Scoring
+risk_scoring:
+  critical: 10
+  high: 7
+  medium: 4
+  low: 2
+  info: 1
+
+# Remediation Templates
+remediation:
+  DNS-001:
+    steps:
+      - "Navigate to Grid DNS Properties"
+      - "Enable DNSSEC validation"
+      - "Configure trusted keys"
+      - "Test DNSSEC resolution"
+    
+  DHCP-001:
+    steps:
+      - "Review current scope utilization"
+      - "Expand scope range if needed"
+      - "Monitor utilization trends"
+      - "Set up alerting for high utilization"

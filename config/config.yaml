@@ -1,0 +1,115 @@
+# InfoBlox Audit Tool Configuration
+
+# InfoBlox Connection Settings
+infoblox:
+  host: ""  # Will be set via command line
+  username: "admin"
+  password: ""  # Set via environment variable or command line
+  port: 443
+  version: "2.12"  # WAPI version
+  ssl_verify: true
+  timeout: 30
+
+# DNS Audit Configuration
+dns_audit:
+  enabled: true
+  check_zones: true
+  check_records: true
+  check_security: true
+  max_zones: 1000
+  
+  # DNS Security Checks
+  security_checks:
+    - dnssec_validation
+    - zone_transfers
+    - recursion_settings
+    - forwarders_security
+    - cache_poisoning_protection
+
+# DHCP Audit Configuration
+dhcp_audit:
+  enabled: true
+  check_scopes: true
+  check_reservations: true
+  check_policies: true
+  max_scopes: 500
+  
+  # DHCP Security Checks
+  security_checks:
+    - unauthorized_clients
+    - lease_time_analysis
+    - option_security
+    - failover_configuration
+
+# Security Audit Configuration
+security_audit:
+  enabled: true
+  
+  # Authentication & Authorization
+  auth_checks:
+    - admin_accounts
+    - password_policies
+    - session_management
+    - role_based_access
+  
+  # Network Security
+  network_checks:
+    - ssl_configuration
+    - certificate_validation
+    - firewall_rules
+    - service_exposure
+  
+  # System Security
+  system_checks:
+    - software_versions
+    - security_patches
+    - log_configuration
+    - backup_settings
+
+# Compliance Audit Configuration
+compliance_audit:
+  enabled: true
+  
+  # Compliance Frameworks
+  frameworks:
+    - name: "SOX"
+      enabled: true
+    - name: "PCI-DSS"
+      enabled: true
+    - name: "HIPAA"
+      enabled: false
+    - name: "SOC2"
+      enabled: true
+  
+  # Compliance Checks
+  checks:
+    - data_retention
+    - access_logging
+    - change_management
+    - segregation_of_duties
+
+# Reporting Configuration
+reporting:
+  include_recommendations: true
+  include_remediation: true
+  severity_levels:
+    - critical
+    - high
+    - medium
+    - low
+    - info
+  
+  # Report Templates
+  templates:
+    executive_summary: true
+    technical_details: true
+    compliance_matrix: true
+    remediation_plan: true
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/audit.log"
+  max_size: "10MB"
+  backup_count: 5
