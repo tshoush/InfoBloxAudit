@@ -8,6 +8,7 @@ import yaml
 import sys
 import os
 from pathlib import Path
+from pydantic import ValidationError
 
 # Add src directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -19,6 +20,7 @@ from audit.security_audit import SecurityAudit
 from audit.compliance_audit import ComplianceAudit
 from reports.report_generator import ReportGenerator
 from utils.helpers import setup_logging, load_config
+from config_models import InfoBloxConfig
 
 
 @click.command()
@@ -52,8 +54,15 @@ def main(target, username, password, config, output, format, audit_type, verbose
         
         config_data['infoblox']['host'] = target
         
+        try:
+            infoblox_config = InfoBloxConfig(**config_data['infoblox'])
+        except ValidationError as e:
+            click.echo("❌ Configuration error in 'infoblox' section:", err=True)
+            click.echo(e, err=True)
+            sys.exit(1)
+
         # Initialize InfoBlox client
-        client = InfoBloxClient(config_data['infoblox'])
+        client = InfoBloxClient(infoblox_config)
         
         # Verify connection
         if not client.test_connection():
@@ -99,3 +108,4 @@ def main(target, username, password, config, output, format, audit_type, verbose
 
 if __name__ == '__main__':
     main()
+

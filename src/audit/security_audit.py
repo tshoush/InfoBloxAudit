@@ -160,7 +160,7 @@ class SecurityAudit:
     
     def _check_default_accounts(self, admin_users: List[Dict]) -> None:
         """Check for default administrative accounts"""
-        default_accounts = ['admin', 'administrator', 'root', 'infoblox']
+        default_accounts = self.rules.get('default_admin_accounts', [])
         
         for user in admin_users:
             username = user.get('name', '').lower()
@@ -208,6 +208,7 @@ class SecurityAudit:
     def _check_user_privileges(self, admin_users: List[Dict]) -> None:
         """Check user privilege assignments"""
         super_admin_count = 0
+        max_super_admins = self.rules.get('max_super_admins', 3)
         
         for user in admin_users:
             admin_groups = user.get('admin_groups', [])
@@ -218,7 +219,7 @@ class SecurityAudit:
                     super_admin_count += 1
                     break
         
-        if super_admin_count > 3:  # Configurable threshold
+        if super_admin_count > max_super_admins:  # Configurable threshold
             self._add_finding(
                 'SEC-003',
                 'medium',
@@ -250,14 +251,17 @@ class SecurityAudit:
                     # Check cipher strength
                     if cipher:
                         cipher_name = cipher[0]
-                        if 'RC4' in cipher_name or 'DES' in cipher_name:
-                            self._add_finding(
-                                'SEC-004',
-                                'high',
-                                f'Weak cipher in use: {cipher_name}',
-                                'Configure strong cipher suites and disable weak ciphers',
-                                {'cipher': cipher_name}
-                            )
+                        weak_ciphers = self.rules.get('weak_ciphers', [])
+                        for weak_cipher in weak_ciphers:
+                            if weak_cipher in cipher_name:
+                                self._add_finding(
+                                    'SEC-004',
+                                    'high',
+                                    f'Weak cipher in use: {cipher_name}',
+                                    'Configure strong cipher suites and disable weak ciphers',
+                                    {'cipher': cipher_name}
+                                )
+                                break
         
         except Exception as e:
             self._add_finding(
@@ -287,8 +291,9 @@ class SecurityAudit:
         
         if snmp_enabled:
             snmp_version = grid_info.get('snmp_version', 'v1')
+            insecure_snmp_versions = self.rules.get('insecure_snmp_versions', [])
             
-            if snmp_version in ['v1', 'v2c']:
+            if snmp_version in insecure_snmp_versions:
                 self._add_finding(
                     'SEC-006',
                     'high',
@@ -299,7 +304,8 @@ class SecurityAudit:
             
             # Check for default community strings
             community_string = grid_info.get('snmp_community', '')
-            if community_string.lower() in ['public', 'private']:
+            default_snmp_communities = self.rules.get('default_snmp_communities', [])
+            if community_string.lower() in default_snmp_communities:
                 self._add_finding(
                     'SEC-007',
                     'critical',
@@ -346,12 +352,13 @@ class SecurityAudit:
         
         # Check log retention
         log_retention = grid_info.get('log_retention_days', 0)
-        if log_retention < 90:  # Compliance requirement
+        min_log_retention_days = self.rules.get('min_log_retention_days', 90)
+        if log_retention < min_log_retention_days:  # Compliance requirement
             self._add_finding(
                 'SEC-010',
                 'medium',
                 f'Insufficient log retention: {log_retention} days',
-                'Configure log retention to meet compliance requirements (minimum 90 days)',
+                f'Configure log retention to meet compliance requirements (minimum {min_log_retention_days} days)',
                 {'retention_days': log_retention}
             )
     
@@ -447,26 +454,4 @@ class SecurityAudit:
         self.findings.append(finding)
         logger.warning(f"Security Finding [{severity.upper()}]: {title}")
     
-    def _generate_summary(self) -> Dict[str, Any]:
-        """Generate audit summary"""
-        severity_counts = {}
-        for finding in self.findings:
-            severity = finding['severity']
-            severity_counts[severity] = severity_counts.get(severity, 0) + 1
-        
-        return {
-            'total_findings': len(self.findings),
-            'severity_breakdown': severity_counts,
-            'risk_level': self._calculate_risk_level(severity_counts)
-        }
     
-    def _calculate_risk_level(self, severity_counts: Dict[str, int]) -> str:
-        """Calculate overall risk level"""
-        if severity_counts.get('critical', 0) > 0:
-            return 'Critical'
-        elif severity_counts.get('high', 0) > 2:
-            return 'High'
-        elif severity_counts.get('high', 0) > 0 or severity_counts.get('medium', 0) > 5:
-            return 'Medium'
-        else:
-            return 'Low'

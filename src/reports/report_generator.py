@@ -14,6 +14,12 @@ from jinja2 import Environment, FileSystemLoader, Template
 
 from utils.helpers import sanitize_filename, format_timestamp
 
+try:
+    from weasyprint import HTML
+    WEASYPRINT_AVAILABLE = True
+except ImportError:
+    WEASYPRINT_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -196,14 +202,21 @@ class ReportGenerator:
     def _generate_pdf_report(self, data: Dict[str, Any], 
                             output_path: Path, timestamp: str) -> str:
         """Generate PDF report (requires additional dependencies)"""
-        
-        # For now, generate HTML and suggest PDF conversion
-        html_path = self._generate_html_report(data, output_path, timestamp)
-        
-        logger.warning("PDF generation requires additional dependencies. HTML report generated instead.")
-        logger.info("To convert to PDF, use: wkhtmltopdf or similar tool")
-        
-        return html_path
+        if not WEASYPRINT_AVAILABLE:
+            logger.error("PDF generation is disabled because weasyprint is not installed.")
+            # Fallback to HTML
+            return self._generate_html_report(data, output_path, timestamp)
+
+        template = self.jinja_env.get_template('audit_report.html')
+        html_content = template.render(data=data)
+
+        filename = f"infoblox_audit_report_{timestamp}.pdf"
+        file_path = output_path / filename
+
+        HTML(string=html_content).write_pdf(file_path)
+
+        logger.info(f"PDF report generated: {file_path}")
+        return str(file_path)
     
     def _group_findings_by_severity(self, findings: List[Dict]) -> Dict[str, List[Dict]]:
         """Group findings by severity level"""

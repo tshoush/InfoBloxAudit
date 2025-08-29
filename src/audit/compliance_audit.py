@@ -503,45 +503,4 @@ class ComplianceAudit:
         self.findings.append(finding)
         logger.warning(f"Compliance Finding [{severity.upper()}]: {title}")
     
-    def _calculate_compliance_score(self, findings: List[Dict]) -> float:
-        """Calculate compliance score (0-100)"""
-        if not findings:
-            return 100.0
-        
-        # Weight findings by severity
-        weights = {'critical': 20, 'high': 10, 'medium': 5, 'low': 2, 'info': 1}
-        total_weight = sum(weights.get(f['severity'], 1) for f in findings)
-        
-        # Calculate score (higher weight = lower score)
-        max_possible_weight = len(findings) * weights['critical']
-        score = max(0, 100 - (total_weight / max_possible_weight * 100))
-        
-        return round(score, 1)
     
-    def _determine_compliance_status(self, findings: List[Dict]) -> str:
-        """Determine compliance status"""
-        critical_count = sum(1 for f in findings if f['severity'] == 'critical')
-        high_count = sum(1 for f in findings if f['severity'] == 'high')
-        
-        if critical_count > 0:
-            return 'Non-Compliant'
-        elif high_count > 3:
-            return 'Partially Compliant'
-        elif high_count > 0:
-            return 'Mostly Compliant'
-        else:
-            return 'Compliant'
-    
-    def _generate_summary(self) -> Dict[str, Any]:
-        """Generate audit summary"""
-        severity_counts = {}
-        for finding in self.findings:
-            severity = finding['severity']
-            severity_counts[severity] = severity_counts.get(severity, 0) + 1
-        
-        return {
-            'total_findings': len(self.findings),
-            'severity_breakdown': severity_counts,
-            'overall_compliance_score': self._calculate_compliance_score(self.findings),
-            'overall_status': self._determine_compliance_status(self.findings)
-        }

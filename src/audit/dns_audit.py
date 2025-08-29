@@ -357,26 +357,4 @@ class DNSAudit:
         self.findings.append(finding)
         logger.warning(f"DNS Finding [{severity.upper()}]: {title}")
     
-    def _generate_summary(self) -> Dict[str, Any]:
-        """Generate audit summary"""
-        severity_counts = {}
-        for finding in self.findings:
-            severity = finding['severity']
-            severity_counts[severity] = severity_counts.get(severity, 0) + 1
-        
-        return {
-            'total_findings': len(self.findings),
-            'severity_breakdown': severity_counts,
-            'risk_level': self._calculate_risk_level(severity_counts)
-        }
     
-    def _calculate_risk_level(self, severity_counts: Dict[str, int]) -> str:
-        """Calculate overall risk level"""
-        if severity_counts.get('critical', 0) > 0:
-            return 'Critical'
-        elif severity_counts.get('high', 0) > 2:
-            return 'High'
-        elif severity_counts.get('high', 0) > 0 or severity_counts.get('medium', 0) > 5:
-            return 'Medium'
-        else:
-            return 'Low'

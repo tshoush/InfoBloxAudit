@@ -10,6 +10,8 @@ from typing import Dict, List, Optional, Any
 from urllib.parse import urljoin
 import urllib3
 
+from src.config_models import InfoBloxConfig
+
 # Disable SSL warnings for self-signed certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -19,20 +21,20 @@ logger = logging.getLogger(__name__)
 class InfoBloxClient:
     """Client for InfoBlox WAPI communication"""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: InfoBloxConfig):
         """
         Initialize InfoBlox client
         
         Args:
-            config: Configuration dictionary containing connection details
+            config: Configuration object containing connection details
         """
-        self.host = config['host']
-        self.username = config['username']
-        self.password = config['password']
-        self.port = config.get('port', 443)
-        self.version = config.get('version', '2.12')
-        self.ssl_verify = config.get('ssl_verify', True)
-        self.timeout = config.get('timeout', 30)
+        self.host = config.host
+        self.username = config.username
+        self.password = config.password.get_secret_value()
+        self.port = config.port
+        self.version = config.version
+        self.ssl_verify = config.ssl_verify
+        self.timeout = config.timeout
         
         self.base_url = f"https://{self.host}:{self.port}/wapi/v{self.version}/"
         self.session = requests.Session()
@@ -77,6 +79,15 @@ class InfoBloxClient:
             
             return response.json()
             
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error for {endpoint}: {e.response.status_code} {e.response.reason}")
+            return None
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection error for {endpoint}: {str(e)}")
+            return None
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Timeout for {endpoint}: {str(e)}")
+            return None
         except requests.exceptions.RequestException as e:
             logger.error(f"GET request failed for {endpoint}: {str(e)}")
             return None
@@ -102,6 +113,15 @@ class InfoBloxClient:
             
             return response.text.strip('"')
             
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error for {endpoint}: {e.response.status_code} {e.response.reason}")
+            return None
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection error for {endpoint}: {str(e)}")
+            return None
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Timeout for {endpoint}: {str(e)}")
+            return None
         except requests.exceptions.RequestException as e:
             logger.error(f"POST request failed for {endpoint}: {str(e)}")
             return None
@@ -124,6 +144,15 @@ class InfoBloxClient:
             
             return True
             
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error for {ref}: {e.response.status_code} {e.response.reason}")
+            return False
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection error for {ref}: {str(e)}")
+            return False
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Timeout for {ref}: {str(e)}")
+            return False
         except requests.exceptions.RequestException as e:
             logger.error(f"PUT request failed for {ref}: {str(e)}")
             return False
@@ -145,6 +174,15 @@ class InfoBloxClient:
             
             return True
             
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error for {ref}: {e.response.status_code} {e.response.reason}")
+            return False
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection error for {ref}: {str(e)}")
+            return False
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Timeout for {ref}: {str(e)}")
+            return False
         except requests.exceptions.RequestException as e:
             logger.error(f"DELETE request failed for {ref}: {str(e)}")
             return False

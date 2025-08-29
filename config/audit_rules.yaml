@@ -36,6 +36,16 @@ dns_rules:
 
 # DHCP Audit Rules
 dhcp_rules:
+  max_static_reservations: 100
+  min_lease_time: 3600
+  max_lease_time: 604800
+  dos_lease_threshold: 300
+  max_client_id_length: 50
+  public_dns_servers:
+    - '8.8.8.8'
+    - '8.8.4.4'
+    - '1.1.1.1'
+    - '1.0.0.1'
   scope_security:
     - rule_id: "DHCP-001"
       name: "Scope Utilization"
@@ -61,6 +71,12 @@ dhcp_rules:
 
 # Security Audit Rules
 security_rules:
+  default_admin_accounts: ['admin', 'administrator', 'root', 'infoblox']
+  max_super_admins: 3
+  weak_ciphers: ['RC4', 'DES']
+  insecure_snmp_versions: ['v1', 'v2c']
+  default_snmp_communities: ['public', 'private']
+  min_log_retention_days: 90
   authentication:
     - rule_id: "SEC-001"
       name: "Default Passwords"

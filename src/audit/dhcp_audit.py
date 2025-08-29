@@ -108,7 +108,8 @@ class DHCPAudit:
         static_leases = [lease for lease in leases if lease.get('binding_state') == 'STATIC']
         
         # Check for excessive static reservations
-        if len(static_leases) > 100:  # Configurable threshold
+        max_static_reservations = self.rules.get('max_static_reservations', 100)
+        if len(static_leases) > max_static_reservations:
             self._add_finding(
                 'DHCP-RES-001',
                 'medium',
@@ -225,8 +226,11 @@ class DHCPAudit:
         
         lease_time = network.get('lease_time', 0)
         
+        min_lease_time = self.rules.get('min_lease_time', 3600)
+        max_lease_time = self.rules.get('max_lease_time', 604800)
+
         # Check for very short lease times
-        if lease_time < 3600:  # Less than 1 hour
+        if lease_time < min_lease_time:  # Less than 1 hour
             self._add_finding(
                 'DHCP-004',
                 'medium',
@@ -236,7 +240,7 @@ class DHCPAudit:
             )
         
         # Check for very long lease times
-        elif lease_time > 86400 * 7:  # More than 1 week
+        elif lease_time > max_lease_time:  # More than 1 week
             self._add_finding(
                 'DHCP-005',
                 'low',
@@ -338,10 +342,11 @@ class DHCPAudit:
         
         if dns_servers:
             # Check if DNS servers are internal/trusted
+            public_dns_servers = self.rules.get('public_dns_servers', [])
             dns_list = dns_servers.split(',')
             for dns in dns_list:
                 dns = dns.strip()
-                if dns in ['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1']:
+                if dns in public_dns_servers:
                     self._add_finding(
                         'DHCP-DNS-001',
                         'medium',
@@ -367,8 +372,9 @@ class DHCPAudit:
             lease_time = network.get('lease_time', 0)
             network_addr = network.get('network', 'Unknown')
             
+            dos_lease_threshold = self.rules.get('dos_lease_threshold', 300)
             # Very short lease times can be used for DoS attacks
-            if lease_time < 300:  # Less than 5 minutes
+            if lease_time < dos_lease_threshold:  # Less than 5 minutes
                 self._add_finding(
                     'DHCP-SEC-001',
                     'high',
@@ -381,10 +387,11 @@ class DHCPAudit:
         """Check for potentially unauthorized clients"""
         # Look for unusual patterns in client identifiers
         suspicious_patterns = []
+        max_client_id_length = self.rules.get('max_client_id_length', 50)
         
         for lease in leases:
             client_id = lease.get('client_hostname', '')
-            if client_id and len(client_id) > 50:  # Unusually long hostname
+            if client_id and len(client_id) > max_client_id_length:  # Unusually long hostname
                 suspicious_patterns.append(client_id)
         
         if suspicious_patterns:
@@ -427,26 +434,4 @@ class DHCPAudit:
         self.findings.append(finding)
         logger.warning(f"DHCP Finding [{severity.upper()}]: {title}")
     
-    def _generate_summary(self) -> Dict[str, Any]:
-        """Generate audit summary"""
-        severity_counts = {}
-        for finding in self.findings:
-            severity = finding['severity']
-            severity_counts[severity] = severity_counts.get(severity, 0) + 1
-        
-        return {
-            'total_findings': len(self.findings),
-            'severity_breakdown': severity_counts,
-            'risk_level': self._calculate_risk_level(severity_counts)
-        }
     
-    def _calculate_risk_level(self, severity_counts: Dict[str, int]) -> str:
-        """Calculate overall risk level"""
-        if severity_counts.get('critical', 0) > 0:
-            return 'Critical'
-        elif severity_counts.get('high', 0) > 2:
-            return 'High'
-        elif severity_counts.get('high', 0) > 0 or severity_counts.get('medium', 0) > 5:
-            return 'Medium'
-        else:
-            return 'Low'
